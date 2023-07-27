@@ -1,8 +1,12 @@
 package storage
 
+import t "Git/ruler/node/types"
+
 var storage = map[string]string{}
 
-type InMemoryStore struct{}
+type InMemoryStore struct {
+	Members t.MemberList
+}
 
 func (s InMemoryStore) Get(key string) (string, bool) {
 	v, ok := storage[key]

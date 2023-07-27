@@ -4,6 +4,8 @@ import (
 	s "Git/ruler/node/storage"
 	t "Git/ruler/node/types"
 	u "Git/ruler/node/util"
+	"bytes"
+	"time"
 
 	"encoding/json"
 	"fmt"
@@ -11,7 +13,17 @@ import (
 	"strings"
 )
 
-var store s.InMemoryStore
+// data storage
+
+var store s.Store
+var info *t.NodeInfo
+var members *t.MemberList
+
+func InitHandlers(s s.Store, n *t.NodeInfo, m *t.MemberList) {
+	store = s
+	info = n
+	members = m
+}
 
 func HandleRead(w http.ResponseWriter, r *http.Request) {
 	sugar := u.GetLogger()
@@ -50,6 +62,12 @@ func HandleWrite(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte{})
 	} else {
 		store.Set(e.Key, e.Value)
+
+		if !e.IsReplicate {
+			// TODO add dead-letter-queue for failed replications
+			go replicate(e.Key, e.Value)
+		}
+
 		sugar.Info(fmt.Sprintf("Wrote key(%s) - value(%s)", e.Key, e.Value))
 	}
 }
@@ -69,4 +87,31 @@ func HandleDump(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jResp)
+}
+
+func replicate(key, value string) {
+	sugar := u.GetLogger()
+
+	for _, member := range members.Members {
+		if member.Ip == info.Ip && member.Port == info.Port {
+			continue
+		}
+
+		sBody := fmt.Sprintf(`{"key":"%s","value":"%s","isreplicate":true}`, key, value)
+		jBody := []byte(sBody)
+		reqBody := bytes.NewReader(jBody)
+
+		url := fmt.Sprintf("http://%s:%s/write", member.Ip, member.Port)
+		req, err := http.NewRequest(http.MethodPost, url, reqBody)
+		if err != nil {
+			sugar.Errorf("%s:%s failed to prepare replication request for key(%s) - value(%s)", info.Ip, info.Port, key, value)
+		}
+
+		req.Header.Set("Content-Type", "application/json")
+		client := http.Client{Timeout: 30 * time.Second}
+		_, err = client.Do(req)
+		if err != nil {
+			sugar.Errorf("%s:%s failed to replicate key(%s) - value(%s) to %s:%s", info.Ip, info.Port, key, value, member.Ip, member.Port)
+		}
+	}
 }
