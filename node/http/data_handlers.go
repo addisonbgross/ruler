@@ -65,10 +65,37 @@ func HandleWrite(w http.ResponseWriter, r *http.Request) {
 
 		if !e.IsReplicate {
 			// TODO add dead-letter-queue for failed replications
-			go replicate(e.Key, e.Value)
+			go replicate(e.Key, e.Value, "write")
 		}
 
 		sugar.Info(fmt.Sprintf("Wrote key(%s) - value(%s)", e.Key, e.Value))
+	}
+}
+
+func HandleDelete(w http.ResponseWriter, r *http.Request) {
+	sugar := u.GetLogger()
+
+	dec := json.NewDecoder(r.Body)
+	var e t.StoreEntry
+	err := dec.Decode(&e)
+	if err != nil {
+		sugar.Error("Can't decode Delete payload")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte{})
+	} else {
+		ok := store.Delete(e.Key)
+		if !ok {
+			sugar.Warnf("No key '%s' to delete", e.Key)
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte{})
+		}
+
+		if !e.IsReplicate {
+			// TODO add dead-letter-queue for failed replications
+			go replicate(e.Key, "", "delete")
+		}
+
+		sugar.Info(fmt.Sprintf("Deleted key(%s)", e.Key))
 	}
 }
 
@@ -89,7 +116,7 @@ func HandleDump(w http.ResponseWriter, r *http.Request) {
 	w.Write(jResp)
 }
 
-func replicate(key, value string) {
+func replicate(key, value, method string) {
 	sugar := u.GetLogger()
 
 	for _, member := range members.Members {
@@ -101,10 +128,10 @@ func replicate(key, value string) {
 		jBody := []byte(sBody)
 		reqBody := bytes.NewReader(jBody)
 
-		url := fmt.Sprintf("http://%s:%s/write", member.Ip, member.Port)
+		url := fmt.Sprintf("http://%s:%s/%s", member.Ip, member.Port, method)
 		req, err := http.NewRequest(http.MethodPost, url, reqBody)
 		if err != nil {
-			sugar.Errorf("%s:%s failed to prepare replication request for key(%s) - value(%s)", info.Ip, info.Port, key, value)
+			sugar.Errorf("%s:%s failed to prepare replication '%s' request for key(%s) - value(%s)", info.Ip, info.Port, method, key, value)
 		}
 
 		req.Header.Set("Content-Type", "application/json")

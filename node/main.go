@@ -21,26 +21,26 @@ func main() {
 	ip := os.Args[1]
 	port := os.Args[2]
 
-	config, ok := readConfig()
-	if !ok {
-		panic("Invalid config file")
-	}
+	config := readConfig()
 
 	// initialize data storage
 	info, ok := getOwnNodeInfo(&config, ip, port)
 	if !ok {
 		panic("Unable to get own node info from config file")
 	}
+
 	members := t.MemberList{Members: config.Nodes}
 	store := s.InMemoryStore{}
 	h.InitHandlers(&store, &info, &members)
 
+	u.InitLogger(&info)
 	sugar := u.GetLogger()
 	mux := http.NewServeMux()
 
 	// data storage
 	mux.HandleFunc("/read/", h.HandleRead)
 	mux.HandleFunc("/write", h.HandleWrite)
+	mux.HandleFunc("/delete", h.HandleDelete)
 	mux.HandleFunc("/dump", h.HandleDump)
 
 	// service discovery
@@ -51,35 +51,27 @@ func main() {
 	http.ListenAndServe(listener, mux)
 }
 
-func readConfig() (t.NodeConfig, bool) {
-	sugar := u.GetLogger()
-
+func readConfig() t.NodeConfig {
 	config, err := os.ReadFile("./node-config.json")
 	if err != nil {
-		sugar.Error(("Failed to read node-config.json"))
-		return t.NodeConfig{}, false
+		panic("Failed to read node-config.json")
 	}
 
 	nodeConfig := t.NodeConfig{}
 	err = json.Unmarshal(config, &nodeConfig)
 	if err != nil {
-		sugar.Error("Failed to parse node-config.json")
-		sugar.Error(err)
-		return t.NodeConfig{}, false
+		panic("Failed to parse node-config.json")
 	}
 
-	return nodeConfig, true
+	return nodeConfig
 }
 
 func getOwnNodeInfo(c *t.NodeConfig, ip, port string) (t.NodeInfo, bool) {
-	sugar := u.GetLogger()
-
 	for _, node := range c.Nodes {
 		if node.Ip == ip && node.Port == port {
-			sugar.Infof("Node got own info: rank->%d", node.Rank)
 			return t.NodeInfo{Ip: ip, Port: port, Rank: node.Rank}, true
 		}
 	}
 
-	return t.NodeInfo{}, false
+	panic(fmt.Sprintf("Unable to find own node info in config file for %s:%s", ip, port))
 }

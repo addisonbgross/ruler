@@ -17,6 +17,12 @@ func (s InMemoryStore) Set(key string, value string) {
 	storage[key] = value
 }
 
+func (s InMemoryStore) Delete(key string) bool {
+	_, ok := storage[key]
+	delete(storage, key)
+	return ok
+}
+
 func (s InMemoryStore) Range() map[string]string {
 	copy := map[string]string{}
 	for k, v := range storage {

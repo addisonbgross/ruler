@@ -1,0 +1,8 @@
+#! /bin/bash
+
+if [ -z "$1" ]
+ then
+    echo "Missing localhost port for dumping"
+fi
+
+curl -s "http://127.0.0.1:${1}/dump" -X GET
