@@ -66,9 +66,11 @@ func HandleWrite(w http.ResponseWriter, r *http.Request) {
 		if !e.IsReplicate {
 			// TODO add dead-letter-queue for failed replications
 			go replicate(e.Key, e.Value, "write")
+			sugar.Info(fmt.Sprintf("Wrote key(%s) - value(%s)", e.Key, e.Value))
+		} else {
+			sugar.Info(fmt.Sprintf("Wrote key(%s) - value(%s) - Replication", e.Key, e.Value))
 		}
 
-		sugar.Info(fmt.Sprintf("Wrote key(%s) - value(%s)", e.Key, e.Value))
 	}
 }
 
@@ -93,9 +95,10 @@ func HandleDelete(w http.ResponseWriter, r *http.Request) {
 		if !e.IsReplicate {
 			// TODO add dead-letter-queue for failed replications
 			go replicate(e.Key, "", "delete")
+			sugar.Info(fmt.Sprintf("Deleted key(%s)", e.Key))
+		} else {
+			sugar.Info(fmt.Sprintf("Deleted key(%s) - Replication", e.Key))
 		}
-
-		sugar.Info(fmt.Sprintf("Deleted key(%s)", e.Key))
 	}
 }
 
