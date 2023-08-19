@@ -1,0 +1,26 @@
+#! /bin/bash
+
+if [ -z "$1" ]
+ then
+    echo "Missing total number of nodes to start"
+    exit
+fi
+
+if [ -z "$2" ]
+ then
+    echo "Missing starting port number"
+    exit
+fi
+
+TOTAL=$1
+
+for ((i=0; i<TOTAL; i++)); do
+    PORT=$(($2+$i))
+    coproc nodefd { ../node/node.exe 127.0.0.1 ${PORT}; }
+done
+
+IFS= read -r -d '' -u "${nodefd[0]}" node_output
+echo "$node_output"
+
+while [[ $nodefc ]]; do
+done

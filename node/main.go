@@ -6,6 +6,8 @@ import (
 	t "Git/ruler/node/types"
 	u "Git/ruler/node/util"
 	"encoding/json"
+	"path/filepath"
+	"runtime"
 
 	"fmt"
 	"net/http"
@@ -52,7 +54,10 @@ func main() {
 }
 
 func readConfig() t.NodeConfig {
-	config, err := os.ReadFile("./node-config.json")
+	_, b, _, _ := runtime.Caller(0)
+	root := filepath.Join(filepath.Dir(b), "./node-config.json")
+	// config, err := os.ReadFile("./node-config.json")
+	config, err := os.ReadFile(root)
 	if err != nil {
 		panic("Failed to read node-config.json")
 	}

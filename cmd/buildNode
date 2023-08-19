@@ -2,4 +2,3 @@
 
 cd ~/Git/ruler/node
 go build .
-echo "Build Node complete!"

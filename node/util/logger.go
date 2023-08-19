@@ -31,6 +31,7 @@ func GetLogger() *zap.SugaredLogger {
 	}
 	config.EncoderConfig.TimeKey = zapcore.OmitKey
 	config.EncoderConfig.CallerKey = zapcore.OmitKey
+	config.EncoderConfig.StacktraceKey = zapcore.OmitKey
 
 	logger, err := config.Build()
 	if err != nil {
