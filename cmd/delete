@@ -1,0 +1,15 @@
+#! /bin/bash
+
+if [ -z "$1" ]
+ then
+    echo "Missing localhost port for deleting"
+    exit
+fi
+
+if [ -z "$2" ]
+ then
+    echo "Missing key for deleting"
+    exit
+fi
+
+curl -s "http://127.0.0.1:${1}/delete" -X POST -H 'Content-Type: application/json' -d "{ \"key\": \"${2}\", \"isreplicate\": false}"

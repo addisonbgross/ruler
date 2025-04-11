@@ -1,0 +1,15 @@
+#! /bin/bash
+
+if [ -z "$1" ]
+ then
+    echo "Missing localhost port for reading"
+    exit
+fi
+
+if [ -z "$2" ]
+ then
+    echo "Missing key for reading"
+    exit
+fi
+
+curl -s "http://127.0.0.1:${1}/read/${2}" -X GET

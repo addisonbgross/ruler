@@ -1,0 +1,21 @@
+#! /bin/bash
+
+if [ -z "$1" ]
+ then
+    echo "Missing localhost port for writing"
+    exit
+fi
+
+if [ -z "$2" ]
+ then
+    echo "Missing key for writing"
+    exit
+fi
+
+if [ -z "$3" ]
+ then
+    echo "Missing value for writing"
+    exit
+fi
+
+curl -s "http://127.0.0.1:${1}/write" -X POST -H 'Content-Type: application/json' -d "{ \"key\": \"${2}\", \"value\": \"${3}\", \"isreplicate\": false}"
