@@ -73,9 +73,6 @@ func main() {
 }
 
 func readConfig() (t.NodeConfig, error) {
-	//_, b, _, _ := runtime.Caller(0)
-	//root := filepath.Join(filepath.Dir(b), "./node-config.json")
-	//config, err := os.ReadFile(root)
 	config, err := os.ReadFile("./node-config.json")
 	if err != nil {
 		return t.NodeConfig{}, errors.New(fmt.Sprintf("Failed to read node-config.json: %s", err))
