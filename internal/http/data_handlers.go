@@ -1,10 +1,11 @@
 package http
 
 import (
-	s "Git/ruler/node/storage"
-	t "Git/ruler/node/types"
-	u "Git/ruler/node/util"
 	"bytes"
+	"log"
+	s "ruler-node/internal/storage"
+	t "ruler-node/internal/types"
+	u "ruler-node/internal/util"
 	"time"
 
 	"encoding/json"
@@ -26,7 +27,11 @@ func InitHandlers(s s.Store, n *t.NodeInfo, m *t.MemberList) {
 }
 
 func HandleRead(w http.ResponseWriter, r *http.Request) {
-	sugar := u.GetLogger()
+	sugar, err := u.GetLogger()
+	if err != nil {
+		log.Print("Failed to get logger for HandleRead")
+	}
+	defer r.Body.Close()
 
 	const readPath = "/read/"
 	var key string
@@ -51,11 +56,15 @@ func HandleRead(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleWrite(w http.ResponseWriter, r *http.Request) {
-	sugar := u.GetLogger()
+	sugar, err := u.GetLogger()
+	if err != nil {
+		log.Print("Failed to get logger for HandleWrite")
+	}
+	defer r.Body.Close()
 
 	dec := json.NewDecoder(r.Body)
 	var e t.StoreEntry
-	err := dec.Decode(&e)
+	err = dec.Decode(&e)
 	if err != nil {
 		sugar.Error("Can't decode Write payload")
 		w.WriteHeader(http.StatusBadRequest)
@@ -75,11 +84,15 @@ func HandleWrite(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleDelete(w http.ResponseWriter, r *http.Request) {
-	sugar := u.GetLogger()
+	sugar, err := u.GetLogger()
+	if err != nil {
+		log.Print("Failed to get logger for HandleDelete")
+	}
+	defer r.Body.Close()
 
 	dec := json.NewDecoder(r.Body)
 	var e t.StoreEntry
-	err := dec.Decode(&e)
+	err = dec.Decode(&e)
 	if err != nil {
 		sugar.Error("Can't decode Delete payload")
 		w.WriteHeader(http.StatusBadRequest)
@@ -103,7 +116,11 @@ func HandleDelete(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleDump(w http.ResponseWriter, r *http.Request) {
-	sugar := u.GetLogger()
+	sugar, err := u.GetLogger()
+	if err != nil {
+		log.Print("Failed to get logger for HandleDump")
+	}
+	defer r.Body.Close()
 
 	resp := []t.StoreEntry{}
 	for k, v := range store.Range() {
@@ -120,7 +137,11 @@ func HandleDump(w http.ResponseWriter, r *http.Request) {
 }
 
 func replicate(key, value, method string) {
-	sugar := u.GetLogger()
+	sugar, err := u.GetLogger()
+	if err != nil {
+		log.Print("Failed to get logger for Replicate")
+		return
+	}
 
 	for _, member := range members.Members {
 		if member.Ip == info.Ip && member.Port == info.Port {

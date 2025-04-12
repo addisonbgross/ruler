@@ -1,6 +1,6 @@
 package storage
 
-import t "Git/ruler/node/types"
+import t "ruler-node/internal/types"
 
 var storage = map[string]string{}
 

@@ -1,7 +1,8 @@
 package util
 
 import (
-	t "Git/ruler/node/types"
+	"errors"
+	t "ruler-node/internal/types"
 
 	"fmt"
 
@@ -16,13 +17,13 @@ func InitLogger(n *t.NodeInfo) {
 	info = n
 }
 
-func GetLogger() *zap.SugaredLogger {
+func GetLogger() (*zap.SugaredLogger, error) {
 	if info == nil {
-		panic("Logger not supplied with NodeInfo")
+		return nil, errors.New("logger not supplied with NodeInfo")
 	}
 
 	if sugarLogger != nil {
-		return sugarLogger
+		return sugarLogger, nil
 	}
 
 	config := zap.NewProductionConfig()
@@ -38,5 +39,5 @@ func GetLogger() *zap.SugaredLogger {
 		fmt.Printf("%+v", err)
 	}
 	sugarLogger = logger.Sugar()
-	return sugarLogger
+	return sugarLogger, nil
 }

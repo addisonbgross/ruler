@@ -1,4 +1,4 @@
-module Git/ruler/node
+module ruler-node
 
 go 1.20
 

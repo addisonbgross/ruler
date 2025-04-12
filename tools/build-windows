@@ -1,0 +1,4 @@
+#! /bin/bash
+
+cd ~/Git/ruler-node
+go build -o cmd/ruler-node.exe  .

@@ -1,13 +1,18 @@
 package http
 
 import (
-	u "Git/ruler/node/util"
+	"log"
+	u "ruler-node/internal/util"
 
 	"net/http"
 )
 
 func HandleMembers(w http.ResponseWriter, r *http.Request) {
-	sugar := u.GetLogger()
+	sugar, err := u.GetLogger()
+	if err != nil {
+		log.Print("Failed to get logger for HandleMembers")
+	}
+	defer r.Body.Close()
 
 	method := r.Method
 	if method == "POST" {
