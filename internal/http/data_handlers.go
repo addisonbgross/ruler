@@ -27,6 +27,12 @@ func InitHandlers(s s.Store, n *t.NodeInfo, m *t.MemberList) {
 }
 
 func HandleRead(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte{})
+		return
+	}
+
 	sugar, err := u.GetLogger()
 	if err != nil {
 		log.Print("Failed to get logger for HandleRead")
@@ -56,10 +62,17 @@ func HandleRead(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleWrite(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte{})
+		return
+	}
+
 	sugar, err := u.GetLogger()
 	if err != nil {
 		log.Print("Failed to get logger for HandleWrite")
 	}
+	sugar.Info("Write request received")
 	defer r.Body.Close()
 
 	dec := json.NewDecoder(r.Body)
@@ -84,6 +97,12 @@ func HandleWrite(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleDelete(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte{})
+		return
+	}
+
 	sugar, err := u.GetLogger()
 	if err != nil {
 		log.Print("Failed to get logger for HandleDelete")
@@ -116,6 +135,12 @@ func HandleDelete(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleDump(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte{})
+		return
+	}
+	
 	sugar, err := u.GetLogger()
 	if err != nil {
 		log.Print("Failed to get logger for HandleDump")

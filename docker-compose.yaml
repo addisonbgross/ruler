@@ -7,7 +7,7 @@
       endpoint_mode: dnsrr
     ports:
       - "8080"
-    command: ["./ruler-node", "-ip", "127.0.0.1", "-port", "8080"]
+    command: ["./ruler-node"]
     networks:
       - node-network
 

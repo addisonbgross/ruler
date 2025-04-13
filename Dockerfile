@@ -11,4 +11,4 @@ RUN go build -o ruler-node .
 
 EXPOSE 8080
 
-CMD ["./ruler-node", "-ip", "127.0.0.1", "-port", "8080"]
+CMD ["./ruler-node"]
