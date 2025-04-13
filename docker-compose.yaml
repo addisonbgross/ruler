@@ -1,0 +1,27 @@
+﻿services:
+  ruler-node:
+    build:
+      context: .
+    deploy:
+      replicas: 5
+      endpoint_mode: dnsrr
+    ports:
+      - "8080"
+    command: ["./ruler-node", "-ip", "127.0.0.1", "-port", "8080"]
+    networks:
+      - node-network
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - ruler-node
+    networks:
+      - node-network
+
+networks:
+  node-network:
+    driver: bridge
