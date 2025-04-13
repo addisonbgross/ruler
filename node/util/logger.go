@@ -2,7 +2,7 @@ package util
 
 import (
 	"errors"
-	t "ruler-node/internal/types"
+	t "ruler/internal/types"
 
 	"fmt"
 

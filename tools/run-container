@@ -1,4 +1,4 @@
 #! /bin/bash
 
 cd ../
-docker run -d -p 8080:8080 ruler-node
+docker run -d -p 8080:8080 ./cmd/node

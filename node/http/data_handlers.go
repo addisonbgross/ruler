@@ -2,10 +2,14 @@ package http
 
 import (
 	"bytes"
+	"context"
+	"github.com/redis/go-redis/v9"
 	"log"
-	s "ruler-node/internal/storage"
-	t "ruler-node/internal/types"
-	u "ruler-node/internal/util"
+	"os"
+	s "ruler/internal/storage"
+	t "ruler/internal/types"
+	u "ruler/internal/util"
+	"strconv"
 	"time"
 
 	"encoding/json"
@@ -140,7 +144,7 @@ func HandleDump(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte{})
 		return
 	}
-	
+
 	sugar, err := u.GetLogger()
 	if err != nil {
 		log.Print("Failed to get logger for HandleDump")
@@ -168,26 +172,52 @@ func replicate(key, value, method string) {
 		return
 	}
 
-	for _, member := range members.Members {
-		if member.Ip == info.Ip && member.Port == info.Port {
-			continue
-		}
+	redisHost := os.Getenv("REDIS_HOST")
+	if redisHost == "" {
+		redisHost = "redis"
+	}
 
+	redisPort := os.Getenv("REDIS_PORT")
+	if redisPort == "" {
+		redisPort = "6379"
+	}
+
+	client := redis.NewClient(&redis.Options{
+		Addr: fmt.Sprintf("%s:%s", redisHost, redisPort),
+	})
+	defer client.Close()
+
+	ctx := context.Background()
+	maxCounter, err := client.Get(ctx, "ruler-node-counter").Result()
+	if err != nil {
+		sugar.Error("Failed to get max counter")
+		return
+	}
+
+	var i int
+	maxCounterInt, err := strconv.Atoi(maxCounter)
+	if err != nil {
+		sugar.Errorf("Failed to convert maxCounter to int: %v", err)
+		return
+	}
+
+	for i = 1; i < maxCounterInt; i++ {
 		sBody := fmt.Sprintf(`{"key":"%s","value":"%s","isreplicate":true}`, key, value)
 		jBody := []byte(sBody)
 		reqBody := bytes.NewReader(jBody)
 
-		url := fmt.Sprintf("http://%s:%s/%s", member.Ip, member.Port, method)
+		url := fmt.Sprintf("http://%s-%d:%s/%s", "ruler-node-ruler-node", i, "8080", method)
 		req, err := http.NewRequest(http.MethodPost, url, reqBody)
 		if err != nil {
 			sugar.Errorf("%s:%s failed to prepare replication '%s' request for key(%s) - value(%s)", info.Ip, info.Port, method, key, value)
 		}
 
 		req.Header.Set("Content-Type", "application/json")
-		client := http.Client{Timeout: 30 * time.Second}
+		client := http.Client{Timeout: 10 * time.Second}
 		_, err = client.Do(req)
 		if err != nil {
-			sugar.Errorf("%s:%s failed to replicate key(%s) - value(%s) to %s:%s", info.Ip, info.Port, key, value, member.Ip, member.Port)
+			sugar.Errorf("%s:%s failed to replicate key(%s) - value(%s) to %s", info.Ip, info.Port, key, value, url)
+			sugar.Error(err)
 		}
 	}
 }

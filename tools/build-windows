@@ -1,4 +1,4 @@
 #! /bin/bash
 
 cd ../
-go build -o ../cmd/ruler-node.exe  .
+go build -o ./cmd/node.exe  .

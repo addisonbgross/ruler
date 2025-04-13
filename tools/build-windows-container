@@ -1,4 +1,4 @@
 #! /bin/bash
 
 cd ../
-docker build -t ruler-node:latest .
+docker build -t node:latest .
