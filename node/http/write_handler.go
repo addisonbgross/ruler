@@ -5,10 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/redis/go-redis/v9"
 	"log"
 	"net/http"
 	"os"
+	rs "ruler/node/discovery"
 	sh "ruler/node/shared"
 	t "ruler/node/types"
 	u "ruler/node/util"
@@ -44,8 +44,12 @@ func HandleWrite(w http.ResponseWriter, r *http.Request) {
 		sh.Store.Set(e.Key, e.Value)
 
 		if !e.IsReplicate {
-			// TODO add dead-letter-queue for failed replications
-			go replicate(e.Key, e.Value, "write")
+			go func() {
+				err := replicate(e.Key, e.Value, "write")
+				if err != nil {
+					sugar.Error(err)
+				}
+			}()
 			sugar.Info(fmt.Sprintf("Wrote key(%s) - value(%s) to", e.Key, e.Value))
 		} else {
 			sugar.Info(fmt.Sprintf("Wrote key(%s) - value(%s) - Replication to", e.Key, e.Value))
@@ -54,57 +58,46 @@ func HandleWrite(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func replicate(key, value, method string) {
+func replicate(key, value, method string) error {
 	sugar, err := u.GetLogger()
 	if err != nil {
-		log.Print("Failed to get logger for Replicate")
-		return
+		return err
 	}
 
-	redisHost := os.Getenv("REDIS_HOST")
-	if redisHost == "" {
-		redisHost = "redis"
-	}
-
-	redisPort := os.Getenv("REDIS_PORT")
-	if redisPort == "" {
-		redisPort = "6379"
-	}
-
-	client := redis.NewClient(&redis.Options{
-		Addr: fmt.Sprintf("%s:%s", redisHost, redisPort),
-	})
-	defer client.Close()
-
+	rc := rs.GetRedisClient()
 	ctx := context.Background()
-	maxCounter, err := client.Get(ctx, "ruler-node-counter").Result()
+	maxCounter, err := rc.Get(ctx, "ruler-node-counter").Result()
 	if err != nil {
-		sugar.Error("Failed to get max counter")
-		return
+		return err
 	}
 
 	var i int
 	maxCounterInt, err := strconv.Atoi(maxCounter)
 	if err != nil {
-		sugar.Errorf("Failed to convert maxCounter to int: %v", err)
-		return
+		return err
+	}
+
+	nodeHostname, err := os.Hostname()
+	if err != nil {
+		return err
 	}
 
 	for i = 1; i <= maxCounterInt; i++ {
+		nextHostname, _ := rc.Get(ctx, fmt.Sprintf("node-hostname:ruler-node-%d", i)).Result()
+		if nextHostname == nodeHostname {
+			sugar.Info("Skipping replication to self...")
+			continue
+		}
+
 		sBody := fmt.Sprintf(`{"key":"%s","value":"%s","isreplicate":true}`, key, value)
 		jBody := []byte(sBody)
 		reqBody := bytes.NewReader(jBody)
 
-		nodeUrl := fmt.Sprintf("%s-%d", "ruler-node", i)
-		url := fmt.Sprintf("http://%s-%d:%s/%s", "ruler-node", i, "8080", method)
-		if nodeUrl == sh.NodeID {
-			sugar.Info(fmt.Sprintf("Skipping replication to self: %s", url))
-			continue
-		}
-
+		url := fmt.Sprintf("http://%s-%d:8080/%s", "ruler-node", i, method)
 		req, err := http.NewRequest(http.MethodPost, url, reqBody)
 		if err != nil {
 			sugar.Errorf("(%s) failed to prepare replication request for key(%s) - value(%s)", sh.NodeID, key, value)
+			continue
 		}
 
 		req.Header.Set("Content-Type", "application/json")
@@ -115,4 +108,6 @@ func replicate(key, value, method string) {
 			sugar.Error(err)
 		}
 	}
+
+	return nil
 }

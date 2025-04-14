@@ -1,7 +1,6 @@
 package util
 
 import (
-	"fmt"
 	sh "ruler/node/shared"
 
 	"go.uber.org/zap"
@@ -25,7 +24,7 @@ func GetLogger() (*zap.SugaredLogger, error) {
 
 	logger, err := config.Build()
 	if err != nil {
-		fmt.Printf("%+v", err)
+		return nil, err
 	}
 	sugarLogger = logger.Sugar()
 	return sugarLogger, nil

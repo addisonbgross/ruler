@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 	rs "ruler/node/discovery"
 	h "ruler/node/http"
 	sh "ruler/node/shared"
@@ -17,6 +19,8 @@ func main() {
 		panic(err)
 	}
 	sh.NodeID = fmt.Sprintf("ruler-node-%d", id)
+	setPublicHostname(id)
+
 	sh.Store = s.InMemoryStore{}
 
 	logger, err := u.GetLogger()
@@ -57,4 +61,20 @@ func getNodeReplicaIdentifier() (int64, error) {
 	}
 
 	return replicaNumber, nil
+}
+
+func setPublicHostname(id int64) {
+	client := rs.GetRedisClient()
+	ctx := context.Background()
+
+	key := fmt.Sprintf("node-hostname:ruler-node-%d", id)
+	log.Default().Printf("Setting hostname to %s", key)
+
+	hostname, err := os.Hostname()
+	if err != nil {
+		log.Default().Printf("Failed to get hostname: %v", err)
+		return
+	}
+
+	client.Set(ctx, key, hostname, 0)
 }
