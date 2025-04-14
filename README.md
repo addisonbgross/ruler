@@ -1,5 +1,5 @@
-# Ruler Node
+# Ruler
 
-A very serious, real, distributed and durable database node
+A very serious, real, distributed and durable key/value store
 
 **TODO**

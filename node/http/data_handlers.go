@@ -6,9 +6,9 @@ import (
 	"github.com/redis/go-redis/v9"
 	"log"
 	"os"
-	s "ruler/internal/storage"
-	t "ruler/internal/types"
-	u "ruler/internal/util"
+	s "ruler/node/storage"
+	t "ruler/node/types"
+	u "ruler/node/util"
 	"strconv"
 	"time"
 
@@ -206,7 +206,7 @@ func replicate(key, value, method string) {
 		jBody := []byte(sBody)
 		reqBody := bytes.NewReader(jBody)
 
-		url := fmt.Sprintf("http://%s-%d:%s/%s", "ruler-node-ruler-node", i, "8080", method)
+		url := fmt.Sprintf("http://%s-%d:%s/%s", "ruler-node", i, "8080", method)
 		req, err := http.NewRequest(http.MethodPost, url, reqBody)
 		if err != nil {
 			sugar.Errorf("%s:%s failed to prepare replication '%s' request for key(%s) - value(%s)", info.Ip, info.Port, method, key, value)

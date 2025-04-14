@@ -1,6 +1,6 @@
 package storage
 
-import t "ruler/internal/types"
+import t "ruler/node/types"
 
 var storage = map[string]string{}
 
