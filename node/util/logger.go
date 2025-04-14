@@ -1,34 +1,23 @@
 package util
 
 import (
-	"errors"
-	t "ruler/node/types"
-
 	"fmt"
+	sh "ruler/node/shared"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
 var sugarLogger *zap.SugaredLogger
-var info *t.NodeInfo
-
-func InitLogger(n *t.NodeInfo) {
-	info = n
-}
 
 func GetLogger() (*zap.SugaredLogger, error) {
-	if info == nil {
-		return nil, errors.New("logger not supplied with NodeInfo")
-	}
-
 	if sugarLogger != nil {
 		return sugarLogger, nil
 	}
 
 	config := zap.NewProductionConfig()
 	config.InitialFields = map[string]interface{}{
-		"node": fmt.Sprintf("%s:%s", info.Ip, info.Port),
+		"node": sh.NodeID,
 	}
 	config.EncoderConfig.TimeKey = zapcore.OmitKey
 	config.EncoderConfig.CallerKey = zapcore.OmitKey

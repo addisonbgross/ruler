@@ -1,0 +1,19 @@
+### write
+POST http://localhost:8080/write
+Content-Type: application/json
+
+{
+  "key": "hello",
+  "value": "there"
+}
+
+### read
+GET http://localhost:8080/read/hello
+
+### delete
+DELETE http://localhost:8080/delete
+Content-Type: application/json
+
+{
+  "key": "hello"
+}

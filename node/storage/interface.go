@@ -5,5 +5,4 @@ type Store interface {
 	Set(key string, value string)
 	Delete(key string) bool
 	Range() map[string]string
-	Incr(key string)
 }
