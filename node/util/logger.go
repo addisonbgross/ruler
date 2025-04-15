@@ -1,10 +1,9 @@
 package util
 
 import (
-	sh "ruler/node/shared"
-
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"os"
 )
 
 var sugarLogger *zap.SugaredLogger
@@ -14,9 +13,14 @@ func GetLogger() (*zap.SugaredLogger, error) {
 		return sugarLogger, nil
 	}
 
+	hostname, err := os.Hostname()
+	if err != nil {
+		return nil, err
+	}
+
 	config := zap.NewProductionConfig()
 	config.InitialFields = map[string]interface{}{
-		"node": sh.NodeID,
+		"node": hostname,
 	}
 	config.EncoderConfig.TimeKey = zapcore.OmitKey
 	config.EncoderConfig.CallerKey = zapcore.OmitKey

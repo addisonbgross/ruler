@@ -2,7 +2,6 @@ package http
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -12,7 +11,6 @@ import (
 	sh "ruler/node/shared"
 	t "ruler/node/types"
 	u "ruler/node/util"
-	"strconv"
 	"time"
 )
 
@@ -50,9 +48,9 @@ func HandleWrite(w http.ResponseWriter, r *http.Request) {
 					sugar.Error(err)
 				}
 			}()
-			sugar.Info(fmt.Sprintf("Wrote key(%s) - value(%s) to", e.Key, e.Value))
+			sugar.Info(fmt.Sprintf("Wrote key(%s) - value(%s)", e.Key, e.Value))
 		} else {
-			sugar.Info(fmt.Sprintf("Wrote key(%s) - value(%s) - Replication to", e.Key, e.Value))
+			sugar.Info(fmt.Sprintf("Wrote key(%s) - value(%s) - Replication", e.Key, e.Value))
 		}
 
 	}
@@ -64,26 +62,17 @@ func replicate(key, value, method string) error {
 		return err
 	}
 
-	rc := rs.GetRedisClient()
-	ctx := context.Background()
-	maxCounter, err := rc.Get(ctx, "ruler-node-counter").Result()
-	if err != nil {
-		return err
-	}
-
-	var i int
-	maxCounterInt, err := strconv.Atoi(maxCounter)
-	if err != nil {
-		return err
-	}
-
 	nodeHostname, err := os.Hostname()
 	if err != nil {
 		return err
 	}
 
-	for i = 1; i <= maxCounterInt; i++ {
-		nextHostname, _ := rc.Get(ctx, fmt.Sprintf("node-hostname:ruler-node-%d", i)).Result()
+	allHostnames, err := rs.GetAllReplicaHostnames()
+	if err != nil {
+		return err
+	}
+
+	for _, nextHostname := range allHostnames {
 		if nextHostname == nodeHostname {
 			sugar.Info("Skipping replication to self...")
 			continue
@@ -93,10 +82,10 @@ func replicate(key, value, method string) error {
 		jBody := []byte(sBody)
 		reqBody := bytes.NewReader(jBody)
 
-		url := fmt.Sprintf("http://%s-%d:8080/%s", "ruler-node", i, method)
+		url := fmt.Sprintf("http://%s:8080/%s", nextHostname, method)
 		req, err := http.NewRequest(http.MethodPost, url, reqBody)
 		if err != nil {
-			sugar.Errorf("(%s) failed to prepare replication request for key(%s) - value(%s)", sh.NodeID, key, value)
+			sugar.Errorf("(%s) failed to prepare replication request for key(%s) - value(%s)", nodeHostname, key, value)
 			continue
 		}
 
@@ -104,7 +93,7 @@ func replicate(key, value, method string) error {
 		client := http.Client{Timeout: 10 * time.Second}
 		_, err = client.Do(req)
 		if err != nil {
-			sugar.Errorf("(%s) failed to replicate key(%s) - value(%s) to %s", sh.NodeID, key, value, url)
+			sugar.Errorf("(%s) failed to replicate key(%s) - value(%s) to %s", nodeHostname, key, value, url)
 			sugar.Error(err)
 		}
 	}

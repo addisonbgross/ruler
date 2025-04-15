@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	sh "ruler/node/shared"
@@ -44,7 +45,7 @@ func HandleRead(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sugar.Info("Read key: ", key)
+	sugar.Info(fmt.Sprintf("Read key: '%s' with value: '%s'", key, value))
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(value))
 }

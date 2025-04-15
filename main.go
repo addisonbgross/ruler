@@ -1,8 +1,6 @@
 package main
 
 import (
-	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -14,12 +12,16 @@ import (
 )
 
 func main() {
-	id, err := getNodeReplicaIdentifier()
+	hostname, err := os.Hostname()
+	if err != nil {
+		log.Default().Printf("Failed to get hostname: %v", err)
+		return
+	}
+
+	err = rs.RegisterReplica(hostname)
 	if err != nil {
 		panic(err)
 	}
-	sh.NodeID = fmt.Sprintf("ruler-node-%d", id)
-	setPublicHostname(id)
 
 	sh.Store = s.InMemoryStore{}
 
@@ -48,33 +50,4 @@ func main() {
 	if err != nil {
 		logger.Error("Failed to close Redis client")
 	}
-}
-
-func getNodeReplicaIdentifier() (int64, error) {
-	client := rs.GetRedisClient()
-	ctx := context.Background()
-
-	// Try to increment a counter and use that as our replica number
-	replicaNumber, err := client.Incr(ctx, "ruler-node-counter").Result()
-	if err != nil {
-		return -1, err
-	}
-
-	return replicaNumber, nil
-}
-
-func setPublicHostname(id int64) {
-	client := rs.GetRedisClient()
-	ctx := context.Background()
-
-	key := fmt.Sprintf("node-hostname:ruler-node-%d", id)
-	log.Default().Printf("Setting hostname to %s", key)
-
-	hostname, err := os.Hostname()
-	if err != nil {
-		log.Default().Printf("Failed to get hostname: %v", err)
-		return
-	}
-
-	client.Set(ctx, key, hostname, 0)
 }
