@@ -14,6 +14,9 @@ import (
 	"time"
 )
 
+// HandleWrite handles incoming requests to store a key-value pair.
+// If the entry is not marked as a replication write, it asynchronously replicates
+// the key-value pair across other nodes in the cluster.
 func HandleWrite(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
@@ -56,6 +59,8 @@ func HandleWrite(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// replicate can either send a key-value pair to all other nodes in the cluster to ensure data consistency,
+// or send a delete request for the provided key. It skips replication to the current node.
 func replicate(key, value, method string) error {
 	sugar, err := u.GetLogger()
 	if err != nil {
@@ -67,7 +72,7 @@ func replicate(key, value, method string) error {
 		return err
 	}
 
-	allHostnames, err := rs.GetAllReplicaHostnames()
+	allHostnames, err := rs.GetAllNodeHostnames()
 	if err != nil {
 		return err
 	}
@@ -83,7 +88,11 @@ func replicate(key, value, method string) error {
 		reqBody := bytes.NewReader(jBody)
 
 		url := fmt.Sprintf("http://%s:8080/%s", nextHostname, method)
-		req, err := http.NewRequest(http.MethodPost, url, reqBody)
+		replicationHttpMethod := http.MethodPost // TODO make this cleaner
+		if method == "delete" {
+			replicationHttpMethod = http.MethodDelete
+		}
+		req, err := http.NewRequest(replicationHttpMethod, url, reqBody)
 		if err != nil {
 			sugar.Errorf("(%s) failed to prepare replication request for key(%s) - value(%s)", nodeHostname, key, value)
 			continue

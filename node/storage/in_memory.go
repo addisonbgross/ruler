@@ -1,12 +1,10 @@
 package storage
 
-import t "ruler/node/types"
-
 var storage = map[string]string{}
 
-type InMemoryStore struct {
-	Members t.MemberList
-}
+// InMemoryStore provides an in-memory key-value store implementation.
+// It allows storing, retrieving, deleting, and iterating over key-value pairs.
+type InMemoryStore struct{}
 
 func (s InMemoryStore) Get(key string) (string, bool) {
 	v, ok := storage[key]

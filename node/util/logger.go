@@ -8,6 +8,7 @@ import (
 
 var sugarLogger *zap.SugaredLogger
 
+// GetLogger initializes and returns a singleton Zap SugaredLogger, pre-configured with basic node information.
 func GetLogger() (*zap.SugaredLogger, error) {
 	if sugarLogger != nil {
 		return sugarLogger, nil

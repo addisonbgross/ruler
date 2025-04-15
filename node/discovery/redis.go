@@ -10,7 +10,9 @@ import (
 
 var Client *redis.Client
 
-func RegisterReplica(hostname string) error {
+// RegisterNode increments the node counter in Redis and
+// registers a new hostname with the format "node-hostname:<hostname>".
+func RegisterNode(hostname string) error {
 	client := GetRedisClient()
 	ctx := context.Background()
 
@@ -25,7 +27,9 @@ func RegisterReplica(hostname string) error {
 	return nil
 }
 
-func GetAllReplicaHostnames() ([]string, error) {
+// GetAllNodeHostnames retrieves all registered node hostnames
+// from Redis. It scans for keys with the pattern "node-hostname:*".
+func GetAllNodeHostnames() ([]string, error) {
 	client := GetRedisClient()
 	ctx := context.Background()
 	numRulerNodes, err := client.Get(ctx, "ruler-node-counter").Result()
@@ -68,6 +72,22 @@ func GetAllReplicaHostnames() ([]string, error) {
 	return results, nil
 }
 
+// CloseClient releases the Redis client connection if it is initialized.
+func CloseClient() error {
+	if Client != nil {
+		err := Client.Close()
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	return nil
+}
+
+// GetRedisClient initializes or retrieves a Redis client instance.
+// If the client is already initialized, it returns the existing client.
 func GetRedisClient() *redis.Client {
 	if Client != nil {
 		return Client

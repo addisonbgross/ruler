@@ -18,11 +18,14 @@ func main() {
 		return
 	}
 
-	err = rs.RegisterReplica(hostname)
+	// register this node to the Redis discovery service
+	err = rs.RegisterNode(hostname)
 	if err != nil {
 		panic(err)
 	}
 
+	// initialize the key/value store
+	// TODO: enable other storage mediums
 	sh.Store = s.InMemoryStore{}
 
 	logger, err := u.GetLogger()
@@ -31,22 +34,16 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
-
-	// data storage
 	mux.HandleFunc("/read/", h.HandleRead)
 	mux.HandleFunc("/write", h.HandleWrite)
 	mux.HandleFunc("/delete", h.HandleDelete)
 	mux.HandleFunc("/dump", h.HandleDump)
-
-	// service discovery
 	mux.HandleFunc("/health", h.HandleHealth)
 
 	logger.Info("New node is listening on port 8080")
 	http.ListenAndServe(":8080", mux)
 
-	// close shared Redis connection
-	client := rs.GetRedisClient()
-	err = client.Close()
+	err = rs.CloseClient()
 	if err != nil {
 		logger.Error("Failed to close Redis client")
 	}

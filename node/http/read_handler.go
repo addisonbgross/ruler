@@ -11,6 +11,8 @@ import (
 	"strings"
 )
 
+// HandleRead processes HTTP GET requests to retrieve the value associated with a given key
+// from the store. The key is extracted from the URL path in the form "/read/{key}".
 func HandleRead(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
@@ -50,6 +52,8 @@ func HandleRead(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(value))
 }
 
+// HandleDump processes HTTP GET requests to return a JSON representation
+// of all key-value pairs in the store.
 func HandleDump(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
@@ -67,7 +71,7 @@ func HandleDump(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := []t.StoreEntry{}
+	var resp []t.StoreEntry
 	for k, v := range sh.Store.Range() {
 		resp = append(resp, t.StoreEntry{Key: k, Value: v})
 	}

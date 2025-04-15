@@ -10,9 +10,13 @@ import (
 	u "ruler/node/util"
 )
 
+// HandleDelete handles HTTP DELETE requests to remove a stored key-value entry.
+// If the key is successfully deleted, the function triggers an asynchronous replication
+// process to propagate the delete operation to other nodes.
 func HandleDelete(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
+	// only permit the DELETE method
 	if r.Method != http.MethodDelete {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte{})
