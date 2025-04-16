@@ -3,12 +3,12 @@ package main
 import (
 	"log"
 	"net/http"
+	rs "node/discovery"
+	h "node/http"
+	sh "node/shared"
+	s "node/storage"
+	u "node/util"
 	"os"
-	rs "ruler/node/discovery"
-	h "ruler/node/http"
-	sh "ruler/node/shared"
-	s "ruler/node/storage"
-	u "ruler/node/util"
 )
 
 func main() {

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	sh "ruler/node/shared"
-	t "ruler/node/types"
-	u "ruler/node/util"
+	sh "node/shared"
+	t "node/types"
+	u "node/util"
 )
 
 // HandleDelete handles HTTP DELETE requests to remove a stored key-value entry.

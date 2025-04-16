@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	rs "node/discovery"
+	sh "node/shared"
+	t "node/types"
+	u "node/util"
 	"os"
-	rs "ruler/node/discovery"
-	sh "ruler/node/shared"
-	t "ruler/node/types"
-	u "ruler/node/util"
 	"time"
 )
 

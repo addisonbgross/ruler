@@ -2,10 +2,10 @@
 
 WORKDIR /app
 
-COPY go.mod go.sum ./
+COPY go.mod /app
 RUN go mod download
 
-COPY . .
+COPY . /app
 
 RUN go build -o ruler-node .
 

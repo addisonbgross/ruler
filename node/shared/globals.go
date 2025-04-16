@@ -1,5 +1,5 @@
 package shared
 
-import s "ruler/node/storage"
+import s "node/storage"
 
 var Store s.Store
