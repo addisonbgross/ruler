@@ -14,15 +14,15 @@ import (
 func main() {
 	hostname, err := os.Hostname()
 	if err != nil {
-		log.Default().Printf("Failed to get hostname: %v", err)
-		return
+		panic(err)
 	}
 
 	// register this node to the Redis discovery service
 	err = rs.RegisterNode(hostname)
 	if err != nil {
-		panic(err)
+		log.Default().Printf("No connection to Redis. This node will not be discoverable!")
 	}
+	defer rs.CloseClient()
 
 	// initialize the key/value store
 	// TODO: enable other storage mediums
@@ -41,10 +41,8 @@ func main() {
 	mux.HandleFunc("/health", h.HandleHealth)
 
 	logger.Info("New node is listening on port 8080")
-	http.ListenAndServe(":8080", mux)
-
-	err = rs.CloseClient()
+	err = http.ListenAndServe(":8080", mux)
 	if err != nil {
-		logger.Error("Failed to close Redis client")
+		panic(err)
 	}
 }
