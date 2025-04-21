@@ -1,5 +1,5 @@
 ### write
-POST http://localhost:8080/write
+POST https://localhost:4000/write
 Content-Type: application/json
 
 {
@@ -8,10 +8,10 @@ Content-Type: application/json
 }
 
 ### read
-GET http://localhost:8080/read/hello
+GET https://localhost:4000/read/hello
 
 ### delete
-DELETE http://localhost:8080/delete
+DELETE https://localhost:4000/delete
 Content-Type: application/json
 
 {

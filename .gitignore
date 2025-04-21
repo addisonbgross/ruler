@@ -1,2 +1,7 @@
 *.exe
 .idea/
+
+# SSL certs
+/reverse-proxy/client.csr
+/reverse-proxy/client.key
+/reverse-proxy/client.pem
