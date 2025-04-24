@@ -2,6 +2,6 @@
 .idea/
 
 # SSL certs
-/reverse-proxy/client.csr
-/reverse-proxy/client.key
-/reverse-proxy/client.pem
+/nginx/client.csr
+/nginx/client.key
+/nginx/client.pem

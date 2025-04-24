@@ -49,18 +49,35 @@
         - node-network
     depends_on:
       db:
-        condition: service_healthy # Wait for `db` healthcheck to pass
+        condition: service_healthy
       redis:
         condition: service_started
 
+  data:
+    build:
+      context: ./data
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=events
+    ports:
+      - "8081"
+    networks:
+      - node-network
+    depends_on:
+      db:
+        condition: service_healthy
 
   nginx:
     build:
-      context: ./reverse-proxy
+      context: ./nginx
     ports:
-      - "4000:443"
+        - "4000:443"
     depends_on:
       - node
+      - data
     networks:
       - node-network
 

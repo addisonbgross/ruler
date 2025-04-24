@@ -17,3 +17,6 @@ Content-Type: application/json
 {
   "key": "hello"
 }
+
+### events
+GET https://localhost:4000/events

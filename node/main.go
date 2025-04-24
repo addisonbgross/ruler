@@ -33,7 +33,7 @@ func main() {
 	err = e.Push(t.NodeActionEvent{
 		Hostname: hostname,
 		Type:     t.NodeStarted,
-		Data:     map[string]string{},
+		Data:     map[string]string{"test": "data"},
 	})
 	if err != nil {
 		panic(err)

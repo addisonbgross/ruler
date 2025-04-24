@@ -5,7 +5,7 @@ SET search_path TO events, public;
 CREATE TABLE events.actions (
     id SERIAL PRIMARY KEY,
     hostname TEXT UNIQUE NOT NULL,
-    type TEXT NOT NULL,
+    type INT NOT NULL,
     data JSONB NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
