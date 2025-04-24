@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	rs "node/discovery"
+	d "node/discovery"
 	sh "node/shared"
 	t "node/types"
 	u "node/util"
@@ -72,7 +72,7 @@ func replicate(key, value, method string) error {
 		return err
 	}
 
-	allHostnames, err := rs.GetAllNodeHostnames()
+	allHostnames, err := d.GetAllNodeHostnames()
 	if err != nil {
 		return err
 	}

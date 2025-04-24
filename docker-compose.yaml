@@ -7,6 +7,28 @@
     networks:
       - node-network
 
+  db:
+    build:
+      context: ./db
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=events
+      - POSTGRES_MAX_CONNECTIONS=500
+    ports:
+      - "5432:5432"
+    volumes:
+      - type: tmpfs
+        target: /var/lib/postgresql/data
+    networks:
+      - node-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d events || exit 1" ]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
   node:
     build:
       context: ./node
@@ -16,12 +38,21 @@
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=events
     ports:
       - "8080"
     networks:
         - node-network
     depends_on:
-      - redis
+      db:
+        condition: service_healthy # Wait for `db` healthcheck to pass
+      redis:
+        condition: service_started
+
 
   nginx:
     build:
