@@ -3,7 +3,7 @@ package redis
 import (
 	"fmt"
 	"github.com/redis/go-redis/v9"
-	"log"
+	"node/util"
 	"os"
 )
 
@@ -37,7 +37,8 @@ func CloseClient() {
 	if client != nil {
 		err := client.Close()
 		if err != nil {
-			log.Print(err)
+			logger, _ := util.GetLogger()
+			logger.Error("Failed to close Redis client")
 		}
 	}
 }

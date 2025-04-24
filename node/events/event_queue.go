@@ -3,10 +3,8 @@ package events
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"log"
 	t "node/types"
 	u "node/util"
 	"os"
@@ -17,9 +15,9 @@ var connection *pgxpool.Pool
 
 // Push a node action to postgres
 func Push(event t.NodeActionEvent) error {
-	c := getConnection()
-	if c == nil {
-		return errors.New("failed to get event db")
+	c, err := getConnection()
+	if err != nil {
+		return err
 	}
 
 	jsonData, err := json.Marshal(event.Data)
@@ -33,17 +31,17 @@ func Push(event t.NodeActionEvent) error {
 	`
 
 	createdAt := time.Now() // Use current time for `created_at` explicitly
-	_, err = connection.Exec(context.Background(), insertQuery, event.Hostname, event.Type, jsonData, createdAt)
+	_, err = c.Exec(context.Background(), insertQuery, event.Hostname, event.Type, jsonData, createdAt)
 	if err != nil {
 		return err
 	}
 
-	sugar, err := u.GetLogger()
+	logger, err := u.GetLogger()
 	if err != nil {
 		return err
 	}
 
-	sugar.Info(fmt.Sprintf("%s action pushed successfully", event.Type.String()))
+	logger.Info(fmt.Sprintf("%s action pushed successfully", event.Type.String()))
 
 	return nil
 }
@@ -57,13 +55,18 @@ func CloseEventQueue() {
 
 // getConnection initializes or retrieves a Postgres connection instance.
 // If the connection is already initialized, it returns the existing connection.
-func getConnection() *pgxpool.Pool {
+func getConnection() (*pgxpool.Pool, error) {
 	if connection != nil {
 		if connection.Ping(context.Background()) == nil {
-			return connection
+			return connection, nil
 		}
 		connection.Close()
 		connection = nil
+	}
+
+	logger, err := u.GetLogger()
+	if err != nil {
+		return nil, err
 	}
 
 	host := os.Getenv("POSTGRES_HOST")
@@ -91,12 +94,11 @@ func getConnection() *pgxpool.Pool {
 		db = "events"
 	}
 
-	var err error
 	connection, err = pgxpool.New(context.Background(), fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", user, password, host, port, db))
 	if err != nil {
-		log.Default().Printf("Unable to connect to database: %v\n", err)
+		return nil, err
 	}
-	log.Default().Printf("Connected to postgres database: %v\n", db)
+	logger.Info(fmt.Sprintf("Connected to postgres database: %v", db))
 
-	return connection
+	return connection, nil
 }

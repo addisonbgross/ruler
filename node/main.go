@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	d "node/discovery"
 	e "node/events"
@@ -28,7 +27,7 @@ func main() {
 	// register this node to the Redis discovery service
 	err = d.RegisterNode(hostname)
 	if err != nil {
-		log.Default().Printf("No connection to Redis. This node will not be discoverable!")
+		logger.Error("No connection to Redis. This node will not be discoverable!")
 	}
 
 	err = e.Push(t.NodeActionEvent{
