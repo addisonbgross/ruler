@@ -10,6 +10,7 @@ import (
 	sh "node/shared"
 	t "node/types"
 	u "node/util"
+	wp "node/workers"
 	"os"
 	"time"
 )
@@ -56,6 +57,24 @@ func HandleWrite(w http.ResponseWriter, r *http.Request) {
 			sugar.Info(fmt.Sprintf("Wrote key(%s) - value(%s) - Replication", e.Key, e.Value))
 		}
 
+		hostname, err := os.Hostname()
+		if err == nil {
+			pool, err := wp.GetWorkerPool()
+			if err == nil {
+				var actionType t.ActionType
+				if e.IsReplicate {
+					actionType = t.WriteReplication
+				} else {
+					actionType = t.Write
+				}
+
+				pool.Submit(t.NodeActionEvent{
+					Hostname: hostname,
+					Type:     actionType,
+					Data:     map[string]string{"key": e.Key, "value": e.Value},
+				})
+			}
+		}
 	}
 }
 

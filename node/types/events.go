@@ -12,9 +12,10 @@ const (
 	NodeStarted ActionType = iota
 	NodeStopped
 	Write
+	WriteReplication
 	Read
 	Delete
-	Replication
+	DeleteReplication
 )
 
 func (a ActionType) String() string {
@@ -25,12 +26,14 @@ func (a ActionType) String() string {
 		return "NodeStopped"
 	case Write:
 		return "Write"
+	case WriteReplication:
+		return "WriteReplication"
 	case Read:
 		return "Read"
 	case Delete:
 		return "Delete"
-	case Replication:
-		return "Replication"
+	case DeleteReplication:
+		return "DeleteReplication"
 	default:
 		return "Unknown"
 	}

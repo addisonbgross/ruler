@@ -8,6 +8,8 @@ import (
 	sh "node/shared"
 	t "node/types"
 	u "node/util"
+	wp "node/workers"
+	"os"
 	"strings"
 )
 
@@ -45,6 +47,18 @@ func HandleRead(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 		w.Write([]byte{})
 		return
+	}
+
+	hostname, err := os.Hostname()
+	if err == nil {
+		pool, err := wp.GetWorkerPool()
+		if err == nil {
+			pool.Submit(t.NodeActionEvent{
+				Hostname: hostname,
+				Type:     t.Read,
+				Data:     map[string]string{"key": key},
+			})
+		}
 	}
 
 	sugar.Info(fmt.Sprintf("Read key: '%s' with value: '%s'", key, value))

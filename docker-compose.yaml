@@ -43,6 +43,7 @@
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=events
+      - WORKER_POOL_SIZE=4
     ports:
       - "8080"
     networks:
@@ -75,6 +76,7 @@
       context: ./nginx
     ports:
         - "4000:443"
+        - "4001:80"
     depends_on:
       - node
       - data

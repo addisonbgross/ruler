@@ -8,6 +8,8 @@ import (
 	sh "node/shared"
 	t "node/types"
 	u "node/util"
+	wp "node/workers"
+	"os"
 )
 
 // HandleDelete handles HTTP DELETE requests to remove a stored key-value entry.
@@ -52,6 +54,25 @@ func HandleDelete(w http.ResponseWriter, r *http.Request) {
 			sugar.Info(fmt.Sprintf("Deleted key(%s)", e.Key))
 		} else {
 			sugar.Info(fmt.Sprintf("Deleted key(%s) - Replication", e.Key))
+		}
+
+		hostname, err := os.Hostname()
+		if err == nil {
+			pool, err := wp.GetWorkerPool()
+			if err == nil {
+				var actionType t.ActionType
+				if e.IsReplicate {
+					actionType = t.DeleteReplication
+				} else {
+					actionType = t.Delete
+				}
+
+				pool.Submit(t.NodeActionEvent{
+					Hostname: hostname,
+					Type:     actionType,
+					Data:     map[string]string{"key": e.Key},
+				})
+			}
 		}
 	}
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	d "node/discovery"
 	e "node/events"
@@ -10,7 +11,10 @@ import (
 	s "node/storage"
 	t "node/types"
 	u "node/util"
+	w "node/workers"
 	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
@@ -30,18 +34,26 @@ func main() {
 		logger.Error("No connection to Redis. This node will not be discoverable!")
 	}
 
-	err = e.Push(t.NodeActionEvent{
-		Hostname: hostname,
-		Type:     t.NodeStarted,
-		Data:     map[string]string{"test": "data"},
-	})
+	wp, err := w.GetWorkerPool()
 	if err != nil {
 		panic(err)
 	}
 
-	// ensure that the Redis + Postgres connections are closed when the program exits
+	wp.Submit(t.NodeActionEvent{
+		Hostname: hostname,
+		Type:     t.NodeStarted,
+		Data:     map[string]string{"test": "worker pool data"},
+	})
+
+	// Context for graceful shutdown
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	// ensure that the Redis & Postgres connections, and the worker pool,
+	// are closed when the program exits
 	defer r.CloseClient()
 	defer e.CloseEventQueue()
+	defer wp.Close()
 
 	// initialize the key/value store
 	// TODO: enable other storage mediums
@@ -54,9 +66,16 @@ func main() {
 	mux.HandleFunc("/dump", h.HandleDump)
 	mux.HandleFunc("/health", h.HandleHealth)
 
-	logger.Info("New node is listening on port 8080")
-	err = http.ListenAndServe(":8080", mux)
-	if err != nil {
-		panic(err)
-	}
+	go func() {
+		logger.Info("New node is listening on port 8080")
+		err = http.ListenAndServe(":8080", mux)
+		if err != nil {
+			panic(err)
+		}
+	}()
+
+	// Wait for a shutdown signal
+	<-ctx.Done()
+	stop()
+	logger.Info("Shutting down gracefully...")
 }
